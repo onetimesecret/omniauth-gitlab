@@ -53,7 +53,7 @@ If your app uses the access token for further API calls, request what it needs, 
 
 Requesting a scope that is not configured will result the error "The requested scope is invalid, unknown, or malformed.".
 
-### Upgrading from 4.x
+### Upgrading from 4.1.0 and earlier
 
 Earlier versions sent no scope, so GitLab granted its default, `api`, which is full read/write access to the API. If your GitLab application only has the `api` scope enabled, either enable `read_user` on it or set `scope: 'api'` to keep the old behaviour.
 
