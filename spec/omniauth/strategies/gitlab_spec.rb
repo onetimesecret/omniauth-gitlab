@@ -49,6 +49,64 @@ describe OmniAuth::Strategies::GitLab do
     end
   end
 
+  describe '#authorize_params' do
+    def scope_for(*args)
+      strategy = OmniAuth::Strategies::GitLab.new(nil, 'GITLAB_KEY', 'GITLAB_SECRET', *args)
+      allow(strategy).to receive(:session).and_return({})
+      strategy.authorize_params[:scope]
+    end
+
+    it 'requests read_user by default' do
+      expect(scope_for).to eq 'read_user'
+    end
+
+    it 'uses the scope option when given' do
+      expect(scope_for(scope: 'api')).to eq 'api'
+    end
+
+    it 'uses a scope from authorize_params when given' do
+      expect(scope_for(authorize_params: { scope: 'read_user openid' })).to eq 'read_user openid'
+    end
+
+    it 'prefers the scope option over authorize_params' do
+      expect(scope_for(scope: 'api', authorize_params: { scope: 'openid' })).to eq 'api'
+    end
+
+    it 'resolves a callable scope option' do
+      expect(scope_for(scope: ->(_env) { 'read_api' })).to eq 'read_api'
+    end
+  end
+
+  describe '#extra' do
+    before { allow(access_token).to receive(:get).and_return(response) }
+
+    it 'includes the raw user info' do
+      expect(subject.extra[:raw_info]).to eq(parsed_response)
+    end
+
+    it 'includes the default site' do
+      expect(subject.extra[:site]).to eq 'https://gitlab.com'
+    end
+
+    context 'with a custom site' do
+      subject { enterprise }
+
+      it 'includes that site' do
+        expect(subject.extra[:site]).to eq enterprise_site
+      end
+    end
+
+    context 'with trailing slashes on the site' do
+      subject do
+        OmniAuth::Strategies::GitLab.new(nil, client_options: { site: 'https://example.com/gitlab//' })
+      end
+
+      it 'strips them so the site is stable as an identity key' do
+        expect(subject.extra[:site]).to eq 'https://example.com/gitlab'
+      end
+    end
+  end
+
   describe '#raw_info' do
     it 'sent request to current user endpoint' do
       expect(access_token).to receive(:get).with('api/v4/user').and_return(response)
