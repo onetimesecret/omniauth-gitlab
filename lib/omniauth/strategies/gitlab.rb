@@ -29,7 +29,7 @@ module OmniAuth
       extra do
         {
           raw_info: raw_info,
-          site: options.client_options.site.to_s.chomp('/')
+          site: options.client_options.site.to_s.sub(%r{/+\z}, '')
         }
       end
 

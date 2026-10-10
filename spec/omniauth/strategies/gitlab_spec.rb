@@ -96,12 +96,12 @@ describe OmniAuth::Strategies::GitLab do
       end
     end
 
-    context 'with a trailing slash on the site' do
+    context 'with trailing slashes on the site' do
       subject do
-        OmniAuth::Strategies::GitLab.new(nil, client_options: { site: 'https://example.com/gitlab/' })
+        OmniAuth::Strategies::GitLab.new(nil, client_options: { site: 'https://example.com/gitlab//' })
       end
 
-      it 'strips it so the site is stable as an identity key' do
+      it 'strips them so the site is stable as an identity key' do
         expect(subject.extra[:site]).to eq 'https://example.com/gitlab'
       end
     end
