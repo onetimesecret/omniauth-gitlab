@@ -90,7 +90,7 @@ Use OmniAuth's `setup` option to choose the GitLab instance per request. Here th
       }
     end
 
-The `uid` is GitLab's numeric user id, which is only unique within one instance, so store identities keyed on site plus uid.
+The `uid` is GitLab's numeric user id, which is only unique within one instance, so key identities on `auth.extra.site` plus `auth.uid`. Store `extra.site` with any access or refresh token too, since a token only works against the instance that issued it.
 
 ## Contributing
 

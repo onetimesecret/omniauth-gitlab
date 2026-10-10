@@ -24,8 +24,13 @@ module OmniAuth
         }
       end
 
+      # `site` identifies the GitLab instance. `uid` is only unique within one
+      # instance, and tokens only work against the instance that issued them.
       extra do
-        { raw_info: raw_info }
+        {
+          raw_info: raw_info,
+          site: options.client_options.site.to_s.chomp('/')
+        }
       end
 
       # Applied here rather than as `option :scope` so that a scope passed in
