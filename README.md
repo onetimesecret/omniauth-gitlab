@@ -6,8 +6,8 @@ This is the OAuth2 strategy for authenticating to your GitLab service.
 
 ## Requirements
 
-Gitlab 7.7.0+
- 
+GitLab 9.0+ (API v4)
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -28,7 +28,7 @@ Or install it yourself as:
       provider :gitlab, ENV['GITLAB_KEY'], ENV['GITLAB_SECRET']
     end
 
-## Standalone Usage
+## Self-managed GitLab
 
     use OmniAuth::Builder do
       provider :gitlab, ENV['GITLAB_KEY'], ENV['GITLAB_SECRET'],
@@ -38,6 +38,8 @@ Or install it yourself as:
            }
         }
     end
+
+An instance served under a relative URL root also works, e.g. `site: 'https://example.com/gitlab'`.
 
 ## Custom scopes
 
@@ -55,22 +57,40 @@ Requesting a scope that is not configured will result the error "The requested s
 
 Earlier versions sent no scope, so GitLab granted its default, `api`, which is full read/write access to the API. If your GitLab application only has the `api` scope enabled, either enable `read_user` on it or set `scope: 'api'` to keep the old behaviour.
 
-## Old API version
+## Custom certificate authority
 
-API V3 will be unsupported from GitLab 9.5 and will be removed in GitLab 9.5 or later.
-
-[https://gitlab.com/help/api/v3_to_v4.md](https://gitlab.com/help/api/v3_to_v4.md)
-
-If you use GitLab 9.0 and below you could configure V3 API:
+If your GitLab instance uses a private CA or a self-signed certificate, pass Faraday SSL options:
 
     use OmniAuth::Builder do
       provider :gitlab, ENV['GITLAB_KEY'], ENV['GITLAB_SECRET'],
         {
            client_options: {
-             site: 'https://gitlab.YOURDOMAIN.com/api/v3'
+             site: 'https://gitlab.YOURDOMAIN.com',
+             connection_opts: { ssl: { ca_file: '/path/to/ca.pem' } }
            }
         }
     end
+
+## Multiple GitLab instances
+
+Use OmniAuth's `setup` option to choose the GitLab instance per request. Here the app's own hostname picks the instance, so the request and callback phases agree:
+
+    GITLAB_INSTANCES = {
+      'a.example.com' => { site: 'https://gitlab.a.example', key: ENV['GITLAB_A_KEY'], secret: ENV['GITLAB_A_SECRET'] },
+      'b.example.com' => { site: 'https://gitlab.b.example', key: ENV['GITLAB_B_KEY'], secret: ENV['GITLAB_B_SECRET'] }
+    }
+
+    use OmniAuth::Builder do
+      provider :gitlab, setup: lambda { |env|
+        instance = GITLAB_INSTANCES.fetch(Rack::Request.new(env).host)
+        strategy = env['omniauth.strategy']
+        strategy.options[:client_id] = instance[:key]
+        strategy.options[:client_secret] = instance[:secret]
+        strategy.options[:client_options][:site] = instance[:site]
+      }
+    end
+
+The `uid` is GitLab's numeric user id, which is only unique within one instance, so store identities keyed on site plus uid.
 
 ## Contributing
 
