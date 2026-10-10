@@ -4,6 +4,11 @@ require 'omniauth-oauth2'
 module OmniAuth
   module Strategies
     class GitLab < OmniAuth::Strategies::OAuth2
+      # Enough to read the signed-in user's profile. Without an explicit scope
+      # GitLab falls back to its own default, `api`, which grants full
+      # read/write access to the API.
+      DEFAULT_SCOPE = 'read_user'.freeze
+
       option :client_options, site: 'https://gitlab.com'
 
       option :redirect_url
@@ -21,6 +26,14 @@ module OmniAuth
 
       extra do
         { raw_info: raw_info }
+      end
+
+      # Applied here rather than as `option :scope` so that a scope passed in
+      # `authorize_params` is not overridden by the default.
+      def authorize_params
+        super.tap do |params|
+          params[:scope] ||= DEFAULT_SCOPE
+        end
       end
 
       def raw_info

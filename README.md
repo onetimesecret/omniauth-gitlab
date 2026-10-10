@@ -41,13 +41,19 @@ Or install it yourself as:
 
 ## Custom scopes
 
-By default, the `api` scope is requested and must be allowed in GitLab's application configuration. To use different scopes:
+By default, the `read_user` scope is requested. It is enough to read the signed in user's profile, and the GitLab application must allow it. To use different scopes:
 
     use OmniAuth::Builder do
       provider :gitlab, ENV['GITLAB_KEY'], ENV['GITLAB_SECRET'], scope: 'read_user openid'
     end
 
+If your app uses the access token for further API calls, request what it needs, for example `scope: 'api'` or `scope: 'read_api'`.
+
 Requesting a scope that is not configured will result the error "The requested scope is invalid, unknown, or malformed.".
+
+### Upgrading from 4.x
+
+Earlier versions sent no scope, so GitLab granted its default, `api`, which is full read/write access to the API. If your GitLab application only has the `api` scope enabled, either enable `read_user` on it or set `scope: 'api'` to keep the old behaviour.
 
 ## Old API version
 

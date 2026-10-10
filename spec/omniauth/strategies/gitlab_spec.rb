@@ -49,6 +49,34 @@ describe OmniAuth::Strategies::GitLab do
     end
   end
 
+  describe '#authorize_params' do
+    def scope_for(*args)
+      strategy = OmniAuth::Strategies::GitLab.new(nil, 'GITLAB_KEY', 'GITLAB_SECRET', *args)
+      allow(strategy).to receive(:session).and_return({})
+      strategy.authorize_params[:scope]
+    end
+
+    it 'requests read_user by default' do
+      expect(scope_for).to eq 'read_user'
+    end
+
+    it 'uses the scope option when given' do
+      expect(scope_for(scope: 'api')).to eq 'api'
+    end
+
+    it 'uses a scope from authorize_params when given' do
+      expect(scope_for(authorize_params: { scope: 'read_user openid' })).to eq 'read_user openid'
+    end
+
+    it 'prefers the scope option over authorize_params' do
+      expect(scope_for(scope: 'api', authorize_params: { scope: 'openid' })).to eq 'api'
+    end
+
+    it 'resolves a callable scope option' do
+      expect(scope_for(scope: ->(_env) { 'read_api' })).to eq 'read_api'
+    end
+  end
+
   describe '#raw_info' do
     it 'sent request to current user endpoint' do
       expect(access_token).to receive(:get).with('api/v4/user').and_return(response)
